@@ -1,0 +1,14 @@
+streamlit
+langchain
+langchain_community==0.3.12
+langchain-huggingface
+groq
+pandas
+sentence-transformers
+faiss-cpu==1.9.0.post1
+transformers
+torch
+openpyxl>=3.1.0
+python-dotenv
+langchain_text_splitters==0.3.3
+llama-index
