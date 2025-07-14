@@ -10,10 +10,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module="torch")
 from langchain_utils import preprocess_data_from_df, create_documents, build_retrievers
 from groq_client import get_groq_client, ask_groq
 
-st.set_page_config(page_title="PaySky HR Analytics Assistant", page_icon="📊", layout="wide")
+st.set_page_config(page_title="PaySky Data Analytics Assistant", page_icon="📊", layout="wide")
 
-st.title("PaySky HR Analytics Assistant")
-st.markdown("Upload your Excel file with employee training records and ask questions about the data!")
+st.title("PaySky Data Analytics Assistant")
+st.markdown("Upload your Excel file with tabular data and ask questions about it using natural language!")
 
 # Function to build retriever with caching
 @st.cache_resource
@@ -27,7 +27,7 @@ with st.sidebar:
     uploaded_file = st.file_uploader(
         "Choose an Excel file", 
         type=['xlsx', 'xls'],
-        help="Upload an Excel file containing employee training records"
+        help="Upload an Excel file containing your tabular data"
     )
     
     if uploaded_file is not None:
@@ -57,7 +57,17 @@ if uploaded_file is not None:
             with col2:
                 st.metric("Columns", len(df.columns))
             with col3:
-                st.metric("Students", df['Student Name'].nunique() if 'Student Name' in df.columns else 0)
+                # Try to find a column that might represent entities (people, items, etc.)
+                entity_col = None
+                for col in df.columns:
+                    if any(keyword in col.lower() for keyword in ['name', 'id', 'user', 'customer', 'student', 'employee', 'person', 'item', 'product']):
+                        entity_col = col
+                        break
+                
+                if entity_col:
+                    st.metric("Unique Entities", df[entity_col].nunique())
+                else:
+                    st.metric("Data Points", len(df))
             
             # Show column names
             st.write("**Columns in your data:**", list(df.columns))
@@ -80,12 +90,14 @@ if uploaded_file is not None:
         # Query interface
         st.subheader("Ask Questions")
         
-        # Sample questions
+        # Sample questions - make them more generic
         sample_questions = [
-            "What are the most common feedback comments?",
-            "Which courses have the highest ratings?",
-            "What do students say about the instructors?",
-            "Are there any negative reviews I should be aware of?"
+            "What are the key insights from this data?",
+            "What are the most common patterns or trends?",
+            "What are the highest and lowest values in the data?",
+            "Are there any outliers or unusual entries?",
+            "What relationships can you identify between different columns?",
+            "Can you summarize the main findings from this dataset?"
         ]
         
         # Dropdown for sample questions
@@ -98,7 +110,7 @@ if uploaded_file is not None:
         if selected_sample:
             query = st.text_input("Your question:", value=selected_sample)
         else:
-            query = st.text_input("Your question:", placeholder="Ask anything about the training records...")
+            query = st.text_input("Your question:", placeholder="Ask anything about your data...")
         
         # Search button
         if st.button("Search", type="primary"):
@@ -133,33 +145,41 @@ if uploaded_file is not None:
                 
     except Exception as e:
         st.error(f"Error processing file: {e}")
-        st.info("Please make sure your Excel file has the expected columns: Course Name, Student Name, Timestamp, Rating, Comment")
+        st.info("Please make sure your Excel file is properly formatted with clear column headers")
 
 else:
     # Show instructions when no file is uploaded
     st.info("Please upload an Excel file to get started!")
     
-    st.subheader("Expected File Format")
+    st.subheader("How it Works")
     st.markdown("""
-    Your Excel file should contain columns like:
-    - **Course Name**: Name of the training course
-    - **Student Name**: Name of the student
-    - **Timestamp**: When the feedback was given
-    - **Rating**: Numeric rating (1-5)
-    - **Comment**: Text feedback from students
+    1. **Upload your Excel file** - Any tabular data with clear column headers
+    2. **Data Processing** - The system will automatically analyze your data structure
+    3. **Ask Questions** - Use natural language to query your data
+    4. **Get Insights** - Receive AI-powered analysis and answers
     """)
     
-    # Sample data format
+    st.subheader("Supported Data Types")
+    st.markdown("""
+    This tool works with any tabular data including:
+    - **Business Data**: Sales records, customer data, financial reports
+    - **Survey Data**: Questionnaire responses, feedback forms
+    - **Academic Data**: Student records, course evaluations, research data
+    - **Operational Data**: Inventory, logistics, performance metrics
+    - **And much more!**
+    """)
+    
+    # Sample data format - make it more generic
     sample_data = {
-        'Course Name': ['Python Programming', 'Data Science', 'Web Development'],
-        'Student Name': ['John Smith', 'Jane Doe', 'Mike Johnson'],
-        'Timestamp': ['2024-01-15 10:30', '2024-01-16 14:20', '2024-01-17 09:15'],
-        'Rating': [5, 4, 5],
-        'Comment': ['Great course!', 'Very informative', 'Excellent instructor']
+        'Product': ['Laptop', 'Phone', 'Tablet'],
+        'Category': ['Electronics', 'Electronics', 'Electronics'],
+        'Price': [1200, 800, 600],
+        'Rating': [4.5, 4.2, 4.0],
+        'Reviews': ['Great performance', 'Good value', 'Compact design']
     }
     
     sample_df = pd.DataFrame(sample_data)
     st.subheader("Sample Data Format")
     st.dataframe(sample_df)
     
-    st.info("**Tip**: Make sure your Excel file follows a similar structure for best results!")
+    st.info("**Tip**: Make sure your Excel file has clear column headers for best results!")

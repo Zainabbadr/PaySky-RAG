@@ -12,17 +12,18 @@ def get_groq_client():
 
 def ask_groq(client, context: str, question: str):
     prompt = f"""
-You are an expert HR analytics assistant. Use the following employee training records to answer the question provided.
+You are an expert data analyst assistant. Use the following data records to answer the question provided.
 
 Instructions:
-- Analyze the training data provided in the context
+- Analyze the data provided in the context
 - Give specific insights based on the actual data
 - If asked about trends, patterns, or statistics, provide concrete examples from the data
 - Be professional and helpful
 - If the question cannot be answered from the provided context, politely explain what information is available
+- Adapt your analysis style to the type of data provided (business, academic, operational, etc.)
 - If the user is greeting or thanking, respond appropriately
 
-Context (Training Records):
+Context (Data Records):
 {context}
 
 Question:
@@ -33,7 +34,7 @@ Answer:"""
     completion = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
-            {"role": "system", "content": "You are an HR analytics assistant. Answer based on the context provided."},
+            {"role": "system", "content": "You are a data analytics assistant. Answer based on the context provided and adapt to any type of tabular data."},
             {"role": "user", "content": f"Context:\n{context}"},
             {"role": "user", "content": f"Question:\n{question}"}
         ],
